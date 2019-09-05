@@ -1,114 +1,74 @@
-/**
- * Sample React Native App
- * https://github.com/facebook/react-native
- *
- * @format
- * @flow
- */
+import React, { Component } from 'react';
+import { StyleSheet, Text, View, Linking } from 'react-native';
+import qs from 'qs';
+import config from './config.js';
+function OAuth(client_id, cb) {
+ Linking.addEventListener('url', handleUrl);
+ function handleUrl(event) {
+  console.log(event.url);
+  Linking.removeEventListener('url', handleUrl);
+  const [, query_string] = event.url.match(/\#(.*)/);
+  console.log(query_string);
+  const query = qs.parse(query_string);
+  console.log(`query: ${JSON.stringify(query)}`);
+  cb(query.access_token);
+}
+const oauthurl = `https://www.fitbit.com/oauth2/authorize?${qs.stringify({
+ client_id,
+ response_type: 'token',
+ scope: 'heartrate activity activity profile sleep',
+redirect_uri:'fitbitTest1://fit',
+ expires_in: '604800',
+})}`;
+console.log(oauthurl);
+Linking.openURL(oauthurl).catch(err => console.error('Error processing linking', err));
+}
 
-import React, {Fragment} from 'react';
-import {
-  SafeAreaView,
-  StyleSheet,
-  ScrollView,
-  View,
-  Text,
-  StatusBar,
-} from 'react-native';
 
-import {
-  Header,
-  LearnMoreLinks,
-  Colors,
-  DebugInstructions,
-  ReloadInstructions,
-} from 'react-native/Libraries/NewAppScreen';
-
-const App = () => {
+function getData(access_token) {
+  fetch('https://api.fitbit.com/1.2/user/-/sleep/date/2019-09-04.json', {
+method: 'GET',
+headers: {
+ Authorization: `Bearer ${access_token}`,
+},
+// body: `root=auto&path=${Math.random()}`
+})
+.then(res => res.json())
+.then(res => {
+console.log(`res: ${JSON.stringify(res)}`);
+})
+.catch(err => {
+  console.error('Error: ', err);
+});
+}
+export default class App extends Component {
+componentDidMount() {
+    OAuth(config.client_id, getData);
+ }
+ 
+ render() {
   return (
-    <Fragment>
-      <StatusBar barStyle="dark-content" />
-      <SafeAreaView>
-        <ScrollView
-          contentInsetAdjustmentBehavior="automatic"
-          style={styles.scrollView}>
-          <Header />
-          {global.HermesInternal == null ? null : (
-            <View style={styles.engine}>
-              <Text style={styles.footer}>Engine: Hermes</Text>
-            </View>
-          )}
-          <View style={styles.body}>
-            <View style={styles.sectionContainer}>
-              <Text style={styles.sectionTitle}>Step One</Text>
-              <Text style={styles.sectionDescription}>
-                Edit <Text style={styles.highlight}>App.js</Text> to change this
-                screen and then come back to see your edits.
-              </Text>
-            </View>
-            <View style={styles.sectionContainer}>
-              <Text style={styles.sectionTitle}>See Your Changes</Text>
-              <Text style={styles.sectionDescription}>
-                <ReloadInstructions />
-              </Text>
-            </View>
-            <View style={styles.sectionContainer}>
-              <Text style={styles.sectionTitle}>Debug</Text>
-              <Text style={styles.sectionDescription}>
-                <DebugInstructions />
-              </Text>
-            </View>
-            <View style={styles.sectionContainer}>
-              <Text style={styles.sectionTitle}>Learn More</Text>
-              <Text style={styles.sectionDescription}>
-                Read the docs to discover what to do next:
-              </Text>
-            </View>
-            <LearnMoreLinks />
-          </View>
-        </ScrollView>
-      </SafeAreaView>
-    </Fragment>
+  <View style={styles.container}>
+    <Text style={styles.welcome}>
+     Welcome to Fitbit Integration
+    </Text>
+  </View>
   );
-};
+ }
+}
+
 
 const styles = StyleSheet.create({
-  scrollView: {
-    backgroundColor: Colors.lighter,
-  },
-  engine: {
-    position: 'absolute',
-    right: 0,
-  },
-  body: {
-    backgroundColor: Colors.white,
-  },
-  sectionContainer: {
-    marginTop: 32,
-    paddingHorizontal: 24,
-  },
-  sectionTitle: {
-    fontSize: 24,
-    fontWeight: '600',
-    color: Colors.black,
-  },
-  sectionDescription: {
-    marginTop: 8,
-    fontSize: 18,
-    fontWeight: '400',
-    color: Colors.dark,
-  },
-  highlight: {
-    fontWeight: '700',
-  },
-  footer: {
-    color: Colors.dark,
-    fontSize: 12,
-    fontWeight: '600',
-    padding: 4,
-    paddingRight: 12,
-    textAlign: 'right',
-  },
+container: {
+ flex: 1,
+ justifyContent: 'center',
+ alignItems: 'center',
+ backgroundColor: '#00a8b5',
+},
+welcome: {
+ fontSize: 25,
+ textAlign: 'center',
+ color: '#fff',
+ margin: 10,
+},
 });
-
-export default App;
